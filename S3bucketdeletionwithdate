@@ -1,0 +1,12 @@
+#!/bin/bash
+
+bucket_name="mytestsamplebucket"
+days=$(date -d '0 days ago' "+%Y-%m-%d")
+
+# List objects with LastModified >= min_date and extract the Key
+objects_to_delete=$(aws s3api list-objects-v2 --bucket "$bucket_name" --query 'Contents[?LastModified>=`'"$days"'`][].{Key: Key}' --output text | awk '{print "ObjectKey="$1}')
+
+# Loop through the objects and delete them
+while read -r obj; do
+    aws s3api delete-object --bucket "$bucket_name" --key "${obj#*=}"
+done <<< "$objects_to_delete"
